@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fichas Diárias de Abastecimento</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #eef2f5;
+            color: #2c3e50;
+            margin: 0;
+            padding: 20px;
+        }
+        .painel-controle {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #34495e;
+            padding-bottom: 10px;
+        }
+        .filtros {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .grupo-input {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: #555;
+        }
+        input[type="date"] {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            min-width: 160px;
+            background-color: #f8fafc;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 45px;
+        }
+        button:hover {
+            background-color: #1c5980;
+        }
+        .btn-imprimir {
+            background-color: #27ae60;
+            display: none;
+        }
+        .btn-imprimir:hover {
+            background-color: #1e8449;
+        }
+        #mensagem {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        #areaFichas {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .ficha-dia {
+            background: #fff;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            page-break-inside: avoid;
+        }
+        .ficha-cabecalho {
+            background-color: #34495e;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .tabela-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ecf0f1;
+            text-align: left;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #f1f2f6;
+            color: #2f3640;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        tr:hover {
+            background-color: #fdfdfd;
+        }
+
+        /* Configuração de Impressão */
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .painel-controle {
+                display: none;
+            }
+            .ficha-dia {
+                box-shadow: none;
+                border: 1px solid #000;
+                margin-bottom: 30px;
+            }
+            .ficha-cabecalho {
+                background-color: #eee;
+                color: #000;
+                border-bottom: 2px solid #000;
+            }
+            th {
+                background-color: #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="painel-controle">
+        <h2>Fichas de Abastecimento - Gestão de Frota</h2>
+        
+        <div class="filtros">
+            <div class="grupo-input">
+                <label for="dataIni">Data Inicial</label>
+                <input type="date" id="dataIni" value="2026-01-01">
+            </div>
+            <div class="grupo-input">
+                <label for="dataFim">Data Final</label>
+                <input type="date" id="dataFim" value="2026-12-31">
+            </div>
+            <button onclick="gerarFichas()">Processar Fichas</button>
+            <button class="btn-imprimir" id="btnImprimir" onclick="window.print()">Imprimir / Salvar PDF</button>
+        </div>
+
+        <div id="mensagem"></div>
+    </div>
+
+    <div id="areaFichas"></div>
+
+    <script>
+        async function gerarFichas() {
+            const dataIni = document.getElementById('dataIni').value;
+            const dataFim = document.getElementById('dataFim').value;
+            const mensagem = document.getElementById('mensagem');
+            const areaFichas = document.getElementById('areaFichas');
+            const btnImprimir = document.getElementById('btnImprimir');
+
+            // Reset da interface
+            areaFichas.innerHTML = '';
+            btnImprimir.style.display = 'none';
+            
+            if (!dataIni || !dataFim) {
+                mensagem.innerHTML = '<span style="color: #c0392b;">Erro: Defina o período completo.</span>';
+                return;
+            }
+
+            mensagem.innerHTML = '<span style="color: #2980b9;">A extrair e processar dados. Aguarde...</span>';
+
+            // ATUALIZAÇÃO: Uso de Proxy para contornar o erro de CORS (Failed to fetch)
+            const urlOriginal = `https://sanches-tripolone.rsistemas.app.br/api/public/bi/abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
+            const urlProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlOriginal)}`;
+
+            try {
+                // Faz a requisição através do proxy
+                const resposta = await fetch(urlProxy);
+
+                if (!resposta.ok) {
+                    throw new Error(`Falha no servidor HTTP: ${resposta.status}`);
+                }
+
+                const dadosBrutos = await resposta.json();
+
+                if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
+                    mensagem.innerHTML = '<span style="color: #e67e22;">Nenhum registo localizado neste período.</span>';
+                    return;
+                }
+
+                // Localiza a chave de data dinamicamente
+                const chaves = Object.keys(dadosBrutos[0]);
+                const chaveData = chaves.find(key => key.toLowerCase().includes('data')) || chaves[0];
+
+                // Agrupamento por dia
+                const dadosAgrupados = {};
+                dadosBrutos.forEach(registro => {
+                    let dataDoRegistro = registro[chaveData] ? String(registro[chaveData]).split(' ')[0] : 'Data Não Informada';
+                    
+                    if (!dadosAgrupados[dataDoRegistro]) {
+                        dadosAgrupados[dataDoRegistro] = [];
+                    }
+                    dadosAgrupados[dataDoRegistro].push(registro);
+                });
+
+                // Ordenação cronológica
+                const datasOrdenadas = Object.keys(dadosAgrupados).sort();
+
+                // Geração da interface
+                let htmlFinal = '';
+
+                datasOrdenadas.forEach(data => {
+                    const registrosDoDia = dadosAgrupados[data];
+                    
+                    // Formatação de data (YYYY-MM-DD para DD/MM/YYYY)
+                    const partesData = data.split('-');
+                    const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : data;
+
+                    // Abertura da ficha e cabeçalho
+                    let fichaHTML = `
+                    <div class="ficha-dia">
+                        <h3 class="ficha-cabecalho">
+                            <span>Data: ${dataFormatada}</span>
+                            <span>Total de Abastecimentos: ${registrosDoDia.length}</span>
+                        </h3>
+                        <div class="tabela-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                    `;
+
+                    // Cabeçalho da tabela dinâmico
+                    chaves.forEach(coluna => {
+                        fichaHTML += `<th>${coluna.replace(/_/g, ' ')}</th>`;
+                    });
+                    
+                    fichaHTML += `
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    // Linhas de dados
+                    registrosDoDia.forEach(reg => {
+                        fichaHTML += `<tr>`;
+                        chaves.forEach(col => {
+                            const valor = reg[col] !== null && reg[col] !== undefined ? reg[col] : '-';
+                            fichaHTML += `<td>${valor}</td>`;
+                        });
+                        fichaHTML += `</tr>`;
+                    });
+
+                    // Fechamento da estrutura da ficha
+                    fichaHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    `;
+
+                    htmlFinal += fichaHTML;
+                });
+
+                // Injeção no DOM e liberação do botão de impressão
+                areaFichas.innerHTML = htmlFinal;
+                mensagem.innerHTML = `<span style="color: #27ae60;">Processamento concluído: ${dadosBrutos.length} abastecimentos distribuídos em ${datasOrdenadas.length} dias.</span>`;
+                btnImprimir.style.display = 'inline-block';
+
+            } catch (erro) {
+                mensagem.innerHTML = `<span style="color: #c0392b;">Erro na extração: ${erro.message}. Verifique a sua conexão ou se a API está ativa.</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
