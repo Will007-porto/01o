@@ -191,13 +191,10 @@
 
             mensagem.innerHTML = '<span style="color: #2980b9;">A extrair e processar dados. Aguarde...</span>';
 
-            // ATUALIZAÇÃO: Uso de Proxy para contornar o erro de CORS (Failed to fetch)
-            const urlOriginal = `https://sanches-tripolone.rsistemas.app.br/api/public/bi/abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
-            const urlProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlOriginal)}`;
+            const url = `https://sanches-tripolone.rsistemas.app.br/api/public/bi/abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
 
             try {
-                // Faz a requisição através do proxy
-                const resposta = await fetch(urlProxy);
+                const resposta = await fetch(url);
 
                 if (!resposta.ok) {
                     throw new Error(`Falha no servidor HTTP: ${resposta.status}`);
@@ -289,7 +286,7 @@
                 btnImprimir.style.display = 'inline-block';
 
             } catch (erro) {
-                mensagem.innerHTML = `<span style="color: #c0392b;">Erro na extração: ${erro.message}. Verifique a sua conexão ou se a API está ativa.</span>`;
+                mensagem.innerHTML = `<span style="color: #c0392b;">Erro na extração: ${erro.message}</span>`;
             }
         }
     </script>
