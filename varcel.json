@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api-tripoloni/:path*",
+      "destination": "https://sanches-tripolone.rsistemas.app.br/:path*"
+    }
+  ]
+}
