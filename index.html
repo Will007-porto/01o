@@ -124,7 +124,6 @@
             background-color: #fdfdfd;
         }
 
-        /* Configuração de Impressão */
         @media print {
             body {
                 background-color: #fff;
@@ -180,7 +179,6 @@
             const areaFichas = document.getElementById('areaFichas');
             const btnImprimir = document.getElementById('btnImprimir');
 
-            // Reset da interface
             areaFichas.innerHTML = '';
             btnImprimir.style.display = 'none';
             
@@ -191,11 +189,10 @@
 
             mensagem.innerHTML = '<span style="color: #2980b9;">A extrair e processar dados. Aguarde...</span>';
 
-            // ATUALIZAÇÃO: Rota utilizando o Rewrite configurado no vercel.json
-            const url = `/api-tripoloni/api/public/bi/abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
+            // ROTA CORRIGIDA: Aponta para o rewrite exato configurado no vercel.json
+            const url = `/bi-abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
 
             try {
-                // Faz a requisição através do proxy interno da Vercel
                 const resposta = await fetch(url);
 
                 if (!resposta.ok) {
@@ -209,11 +206,9 @@
                     return;
                 }
 
-                // Localiza a chave de data dinamicamente
                 const chaves = Object.keys(dadosBrutos[0]);
                 const chaveData = chaves.find(key => key.toLowerCase().includes('data')) || chaves[0];
 
-                // Agrupamento por dia
                 const dadosAgrupados = {};
                 dadosBrutos.forEach(registro => {
                     let dataDoRegistro = registro[chaveData] ? String(registro[chaveData]).split(' ')[0] : 'Data Não Informada';
@@ -224,20 +219,16 @@
                     dadosAgrupados[dataDoRegistro].push(registro);
                 });
 
-                // Ordenação cronológica
                 const datasOrdenadas = Object.keys(dadosAgrupados).sort();
 
-                // Geração da interface
                 let htmlFinal = '';
 
                 datasOrdenadas.forEach(data => {
                     const registrosDoDia = dadosAgrupados[data];
                     
-                    // Formatação de data (YYYY-MM-DD para DD/MM/YYYY)
                     const partesData = data.split('-');
                     const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : data;
 
-                    // Abertura da ficha e cabeçalho
                     let fichaHTML = `
                     <div class="ficha-dia">
                         <h3 class="ficha-cabecalho">
@@ -250,7 +241,6 @@
                                     <tr>
                     `;
 
-                    // Cabeçalho da tabela dinâmico
                     chaves.forEach(coluna => {
                         fichaHTML += `<th>${coluna.replace(/_/g, ' ')}</th>`;
                     });
@@ -261,7 +251,6 @@
                                 <tbody>
                     `;
 
-                    // Linhas de dados
                     registrosDoDia.forEach(reg => {
                         fichaHTML += `<tr>`;
                         chaves.forEach(col => {
@@ -271,7 +260,6 @@
                         fichaHTML += `</tr>`;
                     });
 
-                    // Fechamento da estrutura da ficha
                     fichaHTML += `
                                 </tbody>
                             </table>
@@ -282,7 +270,6 @@
                     htmlFinal += fichaHTML;
                 });
 
-                // Injeção no DOM e liberação do botão de impressão
                 areaFichas.innerHTML = htmlFinal;
                 mensagem.innerHTML = `<span style="color: #27ae60;">Processamento concluído: ${dadosBrutos.length} abastecimentos distribuídos em ${datasOrdenadas.length} dias.</span>`;
                 btnImprimir.style.display = 'inline-block';
