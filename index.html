@@ -191,9 +191,11 @@
 
             mensagem.innerHTML = '<span style="color: #2980b9;">A extrair e processar dados. Aguarde...</span>';
 
-            const url = `https://sanches-tripolone.rsistemas.app.br/api/public/bi/abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
+            // ATUALIZAÇÃO: Rota utilizando o Rewrite configurado no vercel.json
+            const url = `/api-tripoloni/api/public/bi/abastecimentos?dataIni=${dataIni}&dataFim=${dataFim}`;
 
             try {
+                // Faz a requisição através do proxy interno da Vercel
                 const resposta = await fetch(url);
 
                 if (!resposta.ok) {
@@ -286,7 +288,7 @@
                 btnImprimir.style.display = 'inline-block';
 
             } catch (erro) {
-                mensagem.innerHTML = `<span style="color: #c0392b;">Erro na extração: ${erro.message}</span>`;
+                mensagem.innerHTML = `<span style="color: #c0392b;">Erro na extração: ${erro.message}. Verifique a sua conexão ou se a API está ativa.</span>`;
             }
         }
     </script>
