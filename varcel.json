@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api-tripoloni/:path*",
-      "destination": "https://sanches-tripolone.rsistemas.app.br/:path*"
+      "source": "/bi-abastecimentos",
+      "destination": "https://sanches-tripolone.rsistemas.app.br/api/public/bi/abastecimentos"
     }
   ]
 }
